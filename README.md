@@ -1,57 +1,48 @@
 # Java Operational Best Practices
 
-Reusable skill for reviewing, writing, and refactoring production Java code with an emphasis on operational correctness, API contracts, resource safety, and pragmatic modernization.
+Skill reutilizável para escrever, revisar e refatorar código Java de produção. A fonte primária é o checklist *Pílulas de Java* (Wanderlei Souza); lacunas do corpus são cobertas por referências externas autoritativas — **não inventar** pílulas faltantes.
 
-## What this repository contains
+## O que este repositório contém
 
-- `SKILL.md`: the entry point used by the agent
-- `references/operational-principles.md`: neutral review heuristics for day-to-day Java work
-- `references/effective-java-principles.md`: distilled production-oriented guidance aligned with `Effective Java`
-- `references/official-sources.md`: official Java, OpenJDK, and framework references for citations and semantic checks
+O repositório **é o skill**: `SKILL.md` e `references/` ficam na raiz.
 
-## Focus areas
+| Caminho | Função |
+| --- | --- |
+| [`SKILL.md`](SKILL.md) | Ponto de entrada do agente (workflow + checklist compacto) |
+| [`references/pilulas-checklist.md`](references/pilulas-checklist.md) | Regras numeradas completas por tema |
+| [`references/pilulas-corpus.json`](references/pilulas-corpus.json) | Detalhe longo e URL de cada pílula existente |
+| [`references/external-refs.md`](references/external-refs.md) | Fontes oficiais quando o tema não está no corpus |
 
-- Exceptions and failure semantics
-- Resource lifecycle and memory retention
-- Domain modeling and API contracts
-- Collections, streams, async flows, and concurrency
-- Builders, factories, and immutability
-- Java 21+ modernization when it fits the project baseline
+Referências operacionais anteriores, ainda úteis como leitura extra (o skill **não** as carrega no workflow padrão):
 
-## Design goals
+- [`references/operational-principles.md`](references/operational-principles.md)
+- [`references/effective-java-principles.md`](references/effective-java-principles.md)
+- [`references/official-sources.md`](references/official-sources.md)
 
-- Stay compatible with the real project baseline instead of forcing the latest Java features
-- Prefer operational risk reduction over style churn
-- Use neutral guidance rather than content tied to a personal post series
-- Cross-check sensitive guidance against official documentation
+## Como usar
 
-## Reference sources
+Aponte o agente para `SKILL.md` e deixe-o carregar **só** as seções relevantes:
 
-- Oracle Java SE 21 API docs
-- Java Language Specification
-- OpenJDK JEPs and style guides
-- Spring Framework reference documentation
-- `Effective Java, 3rd Edition`, Joshua Bloch
-- `Java Concurrency in Practice`, Brian Goetz et al.
+1. Classificar o tema (no máximo dois).
+2. Aplicar o checklist compacto em `SKILL.md`.
+3. Se precisar da regra numerada, ler `references/pilulas-checklist.md` (e `references/pilulas-corpus.json` só para detalhe/URL).
+4. Se o tema **não** estiver nas pílulas — inclusive números sem conteúdo: **1–12, 22, 23, 26, 29, 46, 61** — ler `references/external-refs.md` e abrir 1 fonte do tema (máx. 2 se conflitar).
 
-## Local usage
+Não carregue todos os `references/` de uma vez.
 
-Point the agent at `SKILL.md` and let it load only the relevant reference sections for the current task. The intended reading order is:
+## Áreas cobertas
 
-1. `SKILL.md`
-2. One or more focused sections from `references/operational-principles.md`
-3. One or more focused sections from `references/effective-java-principles.md` when design guidance is useful
-4. `references/official-sources.md` when citations or semantic verification are needed
+- Performance, recursos, IDs e relógio
+- API e tipos (`var`, lambdas, generics)
+- Collections e streams
+- Exceções e logs
+- Domínio e design (builders, enums, imutabilidade, JPA)
+- Concorrência e Spring
+- Testes
 
-## Publishing
+## Objetivo
 
-This directory is ready to be versioned as its own Git repository. After creating a remote, the typical flow is:
-
-```bash
-git init
-git add .
-git commit -m "Initial version of java-operational-best-practices skill"
-git branch -M main
-git remote add origin <your-remote-url>
-git push -u origin main
-```
+- Preferir mudança mínima e testável
+- Tratar correção antes de performance e estilo
+- Citar fonte externa (título + URL, ou Item/capítulo de livro pago) quando o corpus não cobrir o tema
+- Manter a seção de lacunas como está: não reconstruir pílulas inexistentes

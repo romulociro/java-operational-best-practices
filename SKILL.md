@@ -1,175 +1,142 @@
 ---
-name: java-operational-best-practices
-description: Use when reviewing, writing, or refactoring production Java code and the agent must apply project-aware best practices for exceptions, resources, collections, builders, concurrency, async flows, enums, API contracts, or Java 21+ modernization. Trigger on requests like "review this Java code", "refactor this service", "make this idiomatic Java", or "modernize this to Java 21+". Do NOT use for framework-only setup, non-Java languages, or social content about Java.
-license: CC-BY-4.0
-metadata:
-  author: OpenAI Codex
-  version: 1.0.0
+name: Java boas praticas
+description: >-
+  Use ao escrever, revisar ou refatorar código Java (APIs, collections, streams,
+  exceções, domínio, concorrência, Spring, testes) ou ao pedir boas práticas
+  Java / Pílulas de Java / Effective Java. Não use para skills genéricas, Python
+  ou design de outras linguagens.
 ---
+# Java boas práticas
 
-# Java Operational Best Practices
+Aplica boas práticas Java ao implementar, revisar ou refatorar código. Fonte primária: *Pílulas de Java* de Wanderlei Souza. Lacunas: referências externas autoritativas — nunca inventar pílulas faltantes.
 
-Apply Java best practices in a way that respects the real project instead of forcing generic "clean code" advice. Favor correctness, operability, and compatibility before style churn.
+## Instruções
 
-## Instructions
+### Passo 1: Classificar o trecho
 
-### Step 1: Detect the Project Baseline
+Identifique o tema dominante do código ou do pedido:
 
-Inspect the project before recommending changes.
+- Performance / recursos / IDs / relógio
+- API e tipos (var, lambdas, generics leves)
+- Collections e streams
+- Exceções e logs
+- Domínio e design (builders, enums, imutabilidade, JPA)
+- Concorrência e Spring
+- Testes
 
-- Read the build and runtime signals first: `pom.xml`, `build.gradle*`, toolchains, wrapper files, Dockerfiles, CI config, and module descriptors.
-- Infer the effective Java baseline from both config and code already in use.
-- Detect framework and ecosystem constraints such as Spring Boot, Jakarta, Lombok, JPA, Jackson, Reactor, Quarkus, Micronaut, and internal conventions.
-- Treat mixed-version monorepos per module, not as a single global baseline.
-- Prefer compatibility with the project's actual baseline over "latest Java" enthusiasm.
+Se o pedido misturar temas, escolha no máximo dois e trate em ordem de risco (correção > performance > estilo).
 
-Expected output: a short baseline summary before proposing non-trivial changes.
+### Passo 2: Carregar só o necessário
 
-### Step 2: Classify the Task
+1. Use o **checklist compacto** abaixo para o tema escolhido.
+2. Se precisar da regra numerada completa ou de mais itens do mesmo tema, leia `references/pilulas-checklist.md` (e `references/pilulas-corpus.json` só se precisar do detalhe/URL).
+3. Se o tema **não** estiver coberto pelas pílulas (inclui números sem conteúdo: 1–12, 22, 23, 26, 29, 46, 61), leia `references/external-refs.md` e abra **1 fonte** do tema (máx. 2 se conflitar).
+4. Não carregue todos os references de uma vez.
 
-Decide which mode applies before editing or reviewing.
+### Passo 3: Aplicar
 
-- `review`: find bugs, operational risks, and maintainability hazards.
-- `refactor`: preserve behavior while simplifying contracts or implementation.
-- `modernize`: adopt Java 21+ features only when they fit the existing codebase.
-- `author`: write new code that matches the project's idioms and constraints.
+- Prefira mudança mínima e testável.
+- Explique o *porquê* em uma frase quando estiver revisando.
+- Não cite a série “Pílulas” a menos que peçam a fonte.
+- Ao usar referência externa, cite título + URL (ou Item/capítulo de livro pago, sem colar texto longo).
+- Não invente o conteúdo das pílulas faltantes.
 
-Load only the relevant sections from `references/operational-principles.md` and `references/effective-java-principles.md`. Cross-check `references/official-sources.md` when you need a citation, version-sensitive behavior, framework semantics, or a source trail for established design guidance.
+### Passo 4: Parar
 
-Expected output: one sentence naming the mode and the highest-risk areas.
+Entregue o código ou o feedback de review. Não force o checklist inteiro nem abra refs “por curiosidade”.
 
-### Step 3: Review in Risk Order
+## Checklist compacto (Pílulas)
 
-Use this order unless the user asks for something narrower.
+### Performance
+- #32 Estrutura em memória com teto (fila limitada / limpeza).
+- #33 Try-with-resources; AutoCloseable não fecha no GC.
+- #40 `nanoTime` para elapsed; `currentTimeMillis`/`Instant` para calendário.
+- #41 Preferir UUIDv7/ULID a `UUID.randomUUID()` em índices.
+- #50 Inner class → `static` se não usa a outer.
+- Sem #: WeakHashMap para cache ligado à chave; não recrie Pattern/ObjectMapper/DateTimeFormatter/Random; ThreadLocalRandom.
 
-1. Failure contracts and exceptions
-2. Resource lifecycle and memory retention
-3. Domain modeling and API contracts
-4. Collections, streams, async flow, and concurrency
-5. Object creation, builders, and immutability
-6. Java 21+ modernization opportunities
+### API e tipos
+- #25 `var` só com tipo óbvio.
+- #37 Value objects imutáveis / records.
+- #38 Instantes com ZonedDateTime/Instant; Duration ≠ Period.
+- #72 `@Override equals(Object)`; se equals, hashCode.
+- #74 `toString` sem grafo JPA/SQL/Locale.
+- #77–#78 Wildcards/casts conscientes; validar antes de `@SuppressWarnings`.
+- #91–#95 Lambdas curtas; Predicate puro; method ref só se só encaminha; interfaces primitivas; `java.util.function` primeiro.
 
-Expected output: recommendations ordered by operational impact, not personal taste.
+### Collections e streams
+- #14 `toMap` com merge se houver colisão.
+- #20 Sequenced: `reversed()` é view.
+- #59 Não mute for-each; `removeIf` / `Iterator.remove`.
+- #73/#75/#76 equals/hashCode; `List.copyOf`; sem subtrair ints no compare.
+- #81–#86 PECS; ParameterizedTypeReference; CAP#1; EnumSet/EnumMap; THC com `Class<T>`.
+- #96–#103 `orElseGet`; loop vs stream; filter/map; terminais; groupingBy; limit; flatMap; Gatherers.
 
-## Core Checklist
+### Exceções e logs
+- #51–#55 Esperado → retorno tipado; unchecked se só propaga; mensagem reproduzível; cause encadeado.
+- #56–#58 instanceof; catch vazio documentado; sem log-and-throw na mesma camada.
+- #60 Fail fast; #62 rethrow com `, e`; #66 sem engolir checked no stream.
+- #67 `finally` só cleanup; #68 limitar/deduplicar stack de legado; #69 Throwable só em borda.
+- #70–#71 Result vs exceção; retry só transitório.
 
-### Exceptions and Failure Semantics
+### Domínio e design
+- #15–#19 Factories/builders com cópia defensiva e validação.
+- #21/#24 Enum > static final; switch expression sem default.
+- #30 Utilitária final+static; #31 DI testável; #34 programar para interfaces.
+- #36 Record ≠ entity JPA; #39/#42 composição e `final`.
+- #43–#49 Contratos úteis; pass-by-value; anti-anêmico.
+- #87–#90 Extensão via interface; desserialização segura; crypto AEAD; #88 AOP só para transversal.
 
-- Catch only exceptions the `try` block can really throw. Avoid generic `catch (Exception)`.
-- Do not use exceptions for expected domain outcomes. Model expected outcomes in the return type.
-- Preserve the original cause when translating exceptions across layers.
-- Do not destroy evidence with `new X(e.getMessage())`.
-- Avoid `log and throw`. Log once at the boundary that decides retry, fallback, or the final response.
-- Empty `catch` blocks are only acceptable when intentionally ignored. Rename the variable to `ignored` and document the condition and effect.
-- Exception messages must contain enough context to diagnose the failure without reading source code.
-- If the codebase must choose between `NullPointerException` and `IllegalArgumentException` for invalid `null`, enforce consistency with the team standard instead of mixing both.
+### Concorrência e Spring
+- #13 Não `join`/`get` no serviço assíncrono.
+- #27–#28 Singleton seguro / Spring `@Component`.
+- #35 Virtual threads: pin/blocking; #63–#65 HTTP/3, CompletableFuture roles, interrupt.
 
-### Resources and Memory
+### Testes
+- #16 `@ParameterizedClass`; #45 não public só para testar.
+- #79 `List.of` vs `ArrayList` mutável; #80 Datafaker+seed / Instancio.
 
-- Prefer `try-with-resources` for every `AutoCloseable`.
-- Flag repeated allocation in hot paths: regex compilation, formatters, object mappers, random generators, and similar reusable objects.
-- Eliminate obsolete references in long-lived structures so objects can be reclaimed promptly.
-- If a nested helper class does not need outer instance state, make it `static`.
-- Be suspicious of long-lived callbacks, listeners, caches, and closures that can retain outer objects.
+## Exemplos
 
-### Domain Modeling and API Contracts
+### Exemplo 1: Review de stream
 
-- Prefer semantic domain types over `static final` constants for closed sets of values.
-- Do not persist enums with `ordinal()`.
-- Do not expose enum `name()` as an external API contract unless the codebase explicitly treats it as stable.
-- Prefer composition over inheritance when reuse would otherwise leak superclass assumptions into the domain.
-- Avoid spread-out `switch` logic that "interprets" enums across services.
-- When a type discriminator keeps growing, consider a closed hierarchy instead of `enum + switch`.
-- Push behavior toward the domain object when invariants depend on object state. Do not normalize an anemic model as "just how Spring works".
+Usuário: "revisa esse método que agrupa pedidos"
 
-### Collections, Streams, Async, and Concurrency
+Ações: tema Collections → checklist #98–#100 → se `toMap` sem merge, aplicar #14 → sugerir `groupingBy` se HashMap manual.
 
-- Never structurally modify a collection inside `for-each`. Use `removeIf` with a pure predicate or explicit iterator removal.
-- Treat `reversed()` views in Sequenced Collections as live views, not copies.
-- Use `Collectors.toMap` only with an explicit merge strategy when duplicate keys are possible.
-- Do not block asynchronous flows in the middle of service code unless the boundary truly requires materialization.
-- For multithreaded random generation, prefer `ThreadLocalRandom` unless stronger guarantees are required.
-- For lazily initialized shared state, prefer simple safe patterns over fragile hand-rolled concurrency.
+Resultado: diff mínimo + uma frase do porquê.
 
-### Builders, Factories, and Immutability
+### Exemplo 2: Feature Spring com auditoria
 
-- Prefer static factory methods over telescoping constructors when names improve clarity.
-- Builders must copy mutable inputs defensively.
-- Builders must validate cross-field invariants before object creation completes.
-- Treat builders as disposable, not reusable shared state.
-- Minimize mutability and verify that value objects keep `equals`, `hashCode`, and `toString` consistent with their contract.
-- If Java 21+ records fit the domain, prefer them for immutable carriers with explicit invariants.
+Usuário: "quero auditar quem aprovou o pagamento"
 
-### Java 21+ Adaptation Rules
+Ações: #88 marker + Aspect; não misturar Envers/Micrometer; se faltar detalhe de AOP/Spring Security, abrir `references/external-refs.md` (Spring).
 
-Use modern features only when they fit the project baseline and improve clarity.
+Resultado: annotation + aspect esqueleto, sem lógica de negócio dentro do aspect.
 
-- `records`: good for immutable data carriers with compact invariants.
-- `sealed` hierarchies: good for closed domains and replacing `switch-on-type`.
-- Pattern matching for `instanceof` and `switch`: good when it removes unsafe casts or makes exhaustiveness explicit.
-- Sequenced Collections: good when order semantics are central and the project targets Java 21+.
-- Do not introduce modern syntax into one file if the module or surrounding code clearly stays conservative, unless the user asked for deliberate modernization.
+### Exemplo 3: Tema fora do corpus
 
-Expected output: modernization suggestions should include why they help and why they are safe for this codebase.
+Usuário: "como nomear pacotes neste módulo"
 
-## Output Style
+Ações: pílulas não cobrem naming de package → ler `references/external-refs.md` § Naming → Oracle package naming + Code Conventions.
 
-- For reviews, lead with bugs, risks, and behavioral regressions.
-- For refactors, explain what invariant or operational risk the change addresses.
-- When a recommendation depends on platform behavior, cite the most relevant official source from `references/official-sources.md`.
-- If the project already has a deliberate convention that differs from a generic best practice, follow the project unless the convention is causing a concrete problem.
-
-## Examples
-
-### Example 1: Service Review
-
-User says: "Review this Java service and tell me what's wrong."
-
-Actions:
-1. Inspect the build and framework baseline.
-2. Check exception handling, resource management, and async flow first.
-3. Report findings such as generic catch blocks, `log and throw`, or blocking `join()` in service code.
-
-Result: a review ordered by severity, aligned to the project's Java version and framework conventions.
-
-### Example 2: Enum Refactor
-
-User says: "Refactor this enum mapping to be safer."
-
-Actions:
-1. Inspect whether the enum is persisted, serialized, or used as internal-only state.
-2. Flag `ordinal()` persistence, unstable `name()` contracts, and spread-out `switch` logic.
-3. Recommend stable external codes or behavior on the enum itself, adapting to framework constraints.
-
-Result: a refactor that protects contracts without inventing unnecessary abstraction.
-
-### Example 3: Java 21 Modernization
-
-User says: "Make this Java 21 idiomatic."
-
-Actions:
-1. Verify the module really targets Java 21+.
-2. Consider records, sealed hierarchies, pattern matching, and Sequenced Collections only where they clarify the code.
-3. Preserve interoperability with the rest of the project.
-
-Result: selective modernization that improves readability and safety without style churn.
+Resultado: recomendação com URL; sem inventar pílula #N.
 
 ## Troubleshooting
 
-### Problem: Java version is unclear
+### Checklist inteiro aplicado de uma vez
+Causa: pulou a classificação de tema. Solução: voltar ao Passo 1; no máx. dois temas.
 
-Cause: build config, runtime image, and source code signals disagree.
+### Quis preencher pílula faltante
+Causa: número sem conteúdo (1–12, 22, 23, 26, 29, 46, 61). Solução: usar `external-refs.md`; admitir lacuna se não houver fonte.
 
-Solution: infer from the narrowest safe baseline used by the module, mention the uncertainty, and avoid version-sensitive syntax until clarified.
+### Resposta genérica demais
+Causa: não abriu a regra numerada. Solução: carregar `pilulas-checklist.md` para o tema.
 
-### Problem: The project is legacy but partially modernized
+## Arquivos de referência
 
-Cause: some modules use newer Java features while others remain conservative.
-
-Solution: adapt recommendations per module and avoid cross-cutting rewrites unless explicitly requested.
-
-### Problem: Generated or framework-owned code looks "wrong"
-
-Cause: generated sources and framework adapters often optimize for tooling or contracts, not hand-written style.
-
-Solution: avoid style refactors there unless they cause a real bug, performance issue, or contract problem.
+| Arquivo | Quando ler |
+| --- | --- |
+| `references/pilulas-checklist.md` | Precisa da lista completa por número/tema |
+| `references/pilulas-corpus.json` | Precisa de detalhe longo ou URL da pílula |
+| `references/external-refs.md` | Tema ausente no corpus ou pílula faltante |
